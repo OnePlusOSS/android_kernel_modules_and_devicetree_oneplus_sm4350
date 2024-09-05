@@ -243,6 +243,11 @@ typedef enum lcd_power {
     LCD_POWER_ON,
 } lcd_power_status;
 
+typedef enum fp_status {
+	FP_STATUS_OFF,
+	FP_STATUS_ON,
+} fp_status;
+
 typedef enum {
     OEM_VERIFIED_BOOT_STATE_UNLOCKED,
     OEM_VERIFIED_BOOT_STATE_LOCKED,

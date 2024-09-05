@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_onscreenfingerprint.h
 ** Description : oplus onscreenfingerprint feature
 ** Version : 1.0
+** Date : 2020/04/15
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**   Qianxu         2020/04/15        1.0           Build this moudle
 ******************************************************************/
 #ifndef _OPLUS_ONSCREENFINGERPRINT_H_
 #define _OPLUS_ONSCREENFINGERPRINT_H_

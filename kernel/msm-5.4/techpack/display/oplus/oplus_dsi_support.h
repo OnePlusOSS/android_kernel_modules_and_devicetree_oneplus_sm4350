@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2018,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_dsi_support.h
 ** Description : display driver private management
 ** Version : 1.0
+** Date : 2018/03/17
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**   Hu.Jie          2018/03/17        1.0           Build this moudle
 ******************************************************************/
 #ifndef _OPLUS_DSI_SUPPORT_H_
 #define _OPLUS_DSI_SUPPORT_H_

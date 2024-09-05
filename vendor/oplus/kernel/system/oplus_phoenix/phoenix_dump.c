@@ -13,7 +13,7 @@
 ##
 ## Version:  1.0
 ##    Date:  2019/01/15
-##  Author:  hukun@oplus.com
+##  Author:  hukun
 ## ----------------- Revision History: ----------------------
 ## <author>       <data>           <desc>
 ## Kun Hu         2019/01/15      create this file

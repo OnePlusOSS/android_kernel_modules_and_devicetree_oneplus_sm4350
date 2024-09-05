@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_display_panel_common.c
 ** Description : oplus display panel common feature
 ** Version : 1.0
+** Date : 2020/06/13
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**  Li.Sheng       2020/06/13        1.0           Build this moudle
 ******************************************************************/
 #ifndef _OPLUS_DISPLAY_PANEL_COMMON_H_
 #define _OPLUS_DISPLAY_PANEL_COMMON_H_
@@ -44,5 +50,6 @@ int oplus_display_panel_set_closebl_flag(void *data);
 int __oplus_display_set_cabc_status(int mode);
 int oplus_display_set_cabc_status(void *buf);
 int oplus_display_get_cabc_status(void *buf);
+int oplus_display_set_shutdown_flag(void *buf);
 #endif /*_OPLUS_DISPLAY_PANEL_COMMON_H_*/
 

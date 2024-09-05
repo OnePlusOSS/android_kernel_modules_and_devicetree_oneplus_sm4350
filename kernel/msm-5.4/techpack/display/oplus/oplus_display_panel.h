@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_display_panel.h
 ** Description : oplus display panel char dev  /dev/oplus_panel
 ** Version : 1.0
+** Date : 2020/06/13
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**  Li.Sheng       2020/06/13        1.0           Build this moudle
 ******************************************************************/
 #ifndef _OPLUS_DISPLAY_PANEL_H_
 #define _OPLUS_DISPLAY_PANEL_H_
@@ -54,7 +60,7 @@ struct panel_ioctl_desc {
 
 /*oplus ioctl case start*/
 #define PANEL_COMMOND_BASE 0x00
-#define PANEL_COMMOND_MAX  0x5D
+#define PANEL_COMMOND_MAX  0xBD
 
 #define PANEL_IOCTL_SET_POWER					PANEL_IOWR(0x01, struct panel_vol_set)
 #define PANEL_IOCTL_GET_POWER					PANEL_IOWR(0x02, struct panel_vol_get)
@@ -80,6 +86,7 @@ struct panel_ioctl_desc {
 #define PANEL_IOCTL_GET_CLOSEBL_FLAG				PANEL_IOWR(0x1C, unsigned int)
 #define PANEL_IOCTL_SET_CABC_STATUS					PANEL_IOW(0x59, unsigned int)
 #define PANEL_IOCTL_GET_CABC_STATUS					PANEL_IOWR(0x5A, unsigned int)
+#define PANEL_IOCTL_SET_SHUTDOWN_FLAG               PANEL_IOWR(0xBC, unsigned int)
 /*oplus ioctl case end*/
 
 int oplus_display_panel_init(void);

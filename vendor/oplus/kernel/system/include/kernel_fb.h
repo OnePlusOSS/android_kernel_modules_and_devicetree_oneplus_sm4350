@@ -24,10 +24,6 @@ typedef enum {
 #define FB_SENSOR_ID_CRASH	"10004"
 #define FB_SENSOR_ID_QMI	"202007272041"
 
-#ifdef CONFIG_OPLUS_KEVENT_UPLOAD
-int oplus_kevent_fb(fb_tag tag_id, const char *event_id, unsigned char *payload);
-int oplus_kevent_fb_str(fb_tag tag_id, const char *event_id, unsigned char *str);
-#else
 struct kernel_packet_info
 {
     int type;	 /* 0:root,1:only string,other number represent other type */
@@ -37,8 +33,11 @@ struct kernel_packet_info
     unsigned char payload[0];	/* Optional packet data */
 }__attribute__((packed));
 
-int kevent_send_to_user(struct kernel_packet_info *userinfo) {return 0;}
-int oplus_kevent_fb(fb_tag tag_id, const char *event_id, unsigned char *payload) {return 0;}
-int oplus_kevent_fb_str(fb_tag tag_id, const char *event_id, unsigned char *str) {return 0;}
-#endif
-#endif
+/*static inline int kevent_send_to_user(struct kernel_packet_info *userinfo);*/
+int oplus_kevent_fb(fb_tag tag_id, const char *event_id, unsigned char *payload);
+int oplus_kevent_fb_str(fb_tag tag_id, const char *event_id, unsigned char *str);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+int fb_kevent_send_to_user(struct kernel_packet_info *userinfo);
+#pragma GCC diagnostic pop
+#endif /* __KERNEL_FEEDBACK_H */

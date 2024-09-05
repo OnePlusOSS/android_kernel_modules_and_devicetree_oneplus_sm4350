@@ -627,6 +627,7 @@ static void synaptics_enable_fingerprint_underscreen(void * chip_data, uint32_t 
 {
         int ret = 0;
         struct chip_data_s3706 *chip_info = (struct chip_data_s3706 *)chip_data;
+	struct touchpanel_data *ts = i2c_get_clientdata(chip_info->client);
 
         touch_i2c_write_byte(chip_info->client, 0xff, 0x4);
 		if (chip_info->old_firmware_flag_check) {
@@ -634,6 +635,13 @@ static void synaptics_enable_fingerprint_underscreen(void * chip_data, uint32_t 
 			if (ret != enable)
 				ret = touch_i2c_write_byte(chip_info->client, 0x29, enable); /*open gesture for fingerprint under screen*/
 
+			TPD_DETAIL("%s:ts->is_suspended:%d,enable:%d,chip_info->is_fp_down:%d\n", __func__, ts->is_suspended, enable, chip_info->is_fp_down);
+			if (!ts->is_suspended && !chip_info->is_fp_down && enable) { /* Do force update after enable the fingerprint*/
+				touch_i2c_write_byte(chip_info->client, 0xff, 0x01);        /* page 1*/
+				touch_i2c_write_byte(chip_info->client, chip_info->reg_info.F54_ANALOG_COMMAND_BASE, 0x04);    /* force update*/
+				checkCMD(chip_info, 30);
+				TPD_INFO("%s:force update done", __func__);
+			}
 			ret = touch_i2c_read_byte(chip_info->client, 0x29);
 			TPD_INFO("%s :0x29 is %d\n", __func__, ret);
 		} else {
@@ -750,11 +758,68 @@ static int synaptics_corner_limit_handle(struct chip_data_s3706 *chip_info, bool
         return ret;
 }
 
+static int synaptics_enable_old_firmware_edge_limit(struct chip_data_s3706 *chip_info, bool enable)
+{
+	int ret = 0;
+	ret = touch_i2c_write_byte(chip_info->client, 0xff, 0x04);
+	if (chip_info->touch_direction == 1) {
+		TPD_INFO("%s,touch_direction is %d\n", __func__, chip_info->touch_direction);
+		touch_i2c_write_byte(chip_info->client, 0x12, 0x00);
+		ret = touch_i2c_read_byte(chip_info->client, 0x12);
+		ret |= 0x05;
+		/* enable left and right corner limit */
+		touch_i2c_write_byte(chip_info->client, 0x12, ret);
+		touch_i2c_write_byte(chip_info->client, 0x0C, 0x6F);
+	} else if (chip_info->touch_direction == 2) {
+		TPD_INFO("%s,touch_direction is %d\n", __func__, chip_info->touch_direction);
+		touch_i2c_write_byte(chip_info->client, 0x12, 0x00);
+		ret  = touch_i2c_read_byte(chip_info->client, 0x12);
+		ret |= 0x0A;
+		/* enable left and right corner limit */
+		touch_i2c_write_byte(chip_info->client, 0x12, ret);
+		touch_i2c_write_byte(chip_info->client, 0x0C, 0x6F);
+	} else {
+		TPD_INFO("%s, touch_direction is %d\n", __func__, chip_info->touch_direction);
+		touch_i2c_write_byte(chip_info->client, 0x12, 0x00);
+		ret  = touch_i2c_read_byte(chip_info->client, 0x12);
+		ret |= 0x03;
+		/* enable left and right corner limit */
+		touch_i2c_write_byte(chip_info->client, 0x12, ret);
+		touch_i2c_write_byte(chip_info->client, 0x0C, 0x67);
+	}
+	ret = touch_i2c_read_byte(chip_info->client, 0x0F);
+	TPD_INFO("%s,ret is %d\n", __func__, ret);
+	if (ret == 40) {
+		goto end;
+	} else {
+		/* corner limit area is 80*80 */
+		touch_i2c_write_byte(chip_info->client, 0x0F, 0x28);
+		/* short edge area is 30 */
+		touch_i2c_write_byte(chip_info->client, 0x10, 0x0f);
+		/* set page 1 */
+		ret = touch_i2c_write_byte(chip_info->client, 0xff, 0x01);
+		if (ret < 0) {
+			TPD_INFO("%s,set page 1 fail\n", __func__);
+			return ret;
+		}
+		/* force update*/
+		touch_i2c_write_byte(chip_info->client, chip_info->reg_info.F54_ANALOG_COMMAND_BASE, 0x04);
+		msleep(20);
+	}
+end:
+	ret = touch_i2c_write_byte(chip_info->client, 0xff, 0x00);
+	return ret;
+}
+
 static int synaptics_enable_edge_limit(struct chip_data_s3706 *chip_info, bool enable)
 {
         int ret;
 
         TPD_INFO("%s, edge limit enable = %d, dir: %d\n", __func__, enable, chip_info->touch_direction);
+	if(chip_info->old_firmware_flag_check) { /* Limit support for old firmware support projects like 18865, 18857 */
+		ret = synaptics_enable_old_firmware_edge_limit(chip_info, enable);
+		return ret;
+	}
         ret = touch_i2c_write_byte(chip_info->client, 0xff, 0x04);
         if (ret < 0) {
                 TPD_INFO("%s: select page failed ret = %d\n", __func__, ret);
@@ -1470,7 +1535,6 @@ static int synaptics_auto_test_rt25(struct seq_file *s, struct chip_data_s3706 *
         checkCMD(chip_info, 30);
         ret = touch_i2c_read_block(chip_info->client, chip_info->reg_info.F54_ANALOG_DATA_BASE + 3, 7, buffer);
 
-        /*guomingqiang@phone.bsp, 2016-06-27, add for tp test step2*/
         touch_i2c_write_byte(chip_info->client, 0xff, 0x3);
         touch_i2c_read_block(chip_info->client, chip_info->reg_info.F55_SENSOR_CTRL01, syna_testdata->RX_NUM, buffer_rx);
         touch_i2c_read_block(chip_info->client, chip_info->reg_info.F55_SENSOR_CTRL02, syna_testdata->TX_NUM, buffer_tx);
@@ -1546,7 +1610,6 @@ static int synaptics_auto_test_rt26(struct seq_file *s, struct chip_data_s3706 *
         checkCMD(chip_info, 30);
         ret = touch_i2c_read_block(chip_info->client, chip_info->reg_info.F54_ANALOG_DATA_BASE + 3, 7, buffer);
 
-        /*guomingqiang@phone.bsp, 2016-06-27, add for tp test step2*/
         touch_i2c_write_byte(chip_info->client, 0xff, 0x3);                /*page 3*/
         touch_i2c_read_block(chip_info->client, chip_info->reg_info.F55_SENSOR_CTRL01, syna_testdata->RX_NUM, buffer_rx);
         touch_i2c_read_block(chip_info->client, chip_info->reg_info.F55_SENSOR_CTRL02, syna_testdata->TX_NUM, buffer_tx);

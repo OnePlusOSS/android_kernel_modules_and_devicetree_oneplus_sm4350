@@ -760,6 +760,7 @@ struct touchpanel_data {
 
 	/******For prevention area********/
 	struct mutex		report_mutex;                /*mutex for lock input report flow*/
+	struct kernel_grip_info *grip_info;	/*grip setting and resources*/
 
 	/******For comon data area********/
 	struct mutex		mutex;                       /*mutex for lock i2c related flow*/
@@ -776,7 +777,9 @@ struct touchpanel_data {
 	tp_ic_type    tp_ic_type;
 
 	/******For other feature area********/
+	struct wakeup_source *ws;                           /*Qualcomm KBA-211220012446, To make power manager stay awake*/
 	bool is_incell_panel;                               /*touchpanel is incell*/
+	bool disable_suspend_irq_handler;                   /*touchpanel is support disable suspend irq handler */
 	bool is_noflash_ic;                                 /*noflash ic*/
 	int palm_enable;                                    /*palm enable or not*/
 	int fd_enable;                                        /*face dectet enable or not*/
@@ -789,6 +792,7 @@ struct touchpanel_data {
 	uint8_t	report_point_first_enable;               /*reporting points first enable :1 ,disable 0;*/
 	int noise_level;                                    /*for game mode control*/
 	int limit_enable;                                   /*control state of limit enable */
+	int irq_need_dev_resume_time;
 
 	bool report_rate_white_list_support;
 	int rate_ctrl_level;
@@ -825,6 +829,9 @@ struct touchpanel_data {
 	u8 *log_buf;
 	u8 *gesture_buf;
 	bool gesture_debug_sta;
+#endif
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+	struct touch_algorithm_info *algo_info;
 #endif
 	/******For QOS area********/
 #ifdef CONFIG_TOUCHIRQ_UPDATE_QOS
@@ -932,11 +939,17 @@ struct oplus_touchpanel_operations {
 	/*If the tp ic need do something, use this!*/
 	void (*tp_queue_work_prepare)(void *chip_data);
 
+	void (*enable_kernel_grip)(void *chip_data,
+				   struct kernel_grip_info *grip_info);          /*enable kernel grip in fw*/
 	bool (*tp_irq_throw_away)(void *chip_data);
 	void (*rate_white_list_ctrl)(void *chip_data, int value);
 	int (*smooth_lv_set)(void *chip_data, int level);
 	int (*sensitive_lv_set)(void *chip_data, int level);
 	int (*send_temperature)       (void *chip_data, int value, bool status);
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+	int (*special_points_report)(void *chip_data, struct point_info *points,
+				     int max_num);
+#endif
 	int (*tp_refresh_switch)(void *chip_data, int fps);
 	void (*set_gesture_state)(void *chip_data, int state);
 	int (*get_touch_points_auto)(void *chip_data,

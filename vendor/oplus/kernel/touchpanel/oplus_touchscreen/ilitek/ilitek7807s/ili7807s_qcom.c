@@ -3506,7 +3506,6 @@ static void ilitek_flag_data_init(void)
     ilits->tp_data_format = DATA_FORMAT_DEMO;
     ilits->tp_data_len = P5_X_DEMO_MODE_PACKET_LEN;
     ilits->tp_data_mode = AP_MODE;
-/*shifan@bsp.tp*/
     ilits->position_high_resolution = true;
 
     if (TDDI_RST_BIND) {

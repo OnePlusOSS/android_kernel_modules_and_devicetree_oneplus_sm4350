@@ -20,6 +20,9 @@
 #include <soc/oplus/system/oplus_project.h>
 #include <linux/debugfs.h>
 #include <linux/module.h>
+#include <linux/version.h>
+#include <linux/pm.h>
+#include <linux/qcom_scm.h>
 #include <linux/regmap.h>
 #include <linux/input/qpnp-power-on.h>
 
@@ -37,6 +40,42 @@
 
 #define OPLUS_PMIC_WD_DEFAULT_TIMEOUT 254
 #define OPLUS_PMIC_WD_DEFAULT_ENABLE 0
+
+#define  OPLUS_KE_PROC_ENTRY(name, entry, mode)\
+	({if (!proc_create(#name, S_IFREG | mode, oplus_ke_proc_dir, \
+		&proc_##entry##_fops)){ \
+		pr_info("proc_create %s failed\n", #name);}})
+
+#define OPLUS_KE_FILE_OPS(entry) \
+	static const struct file_operations proc_##entry##_fops = { \
+		.read = proc_##entry##_read, \
+		.write = proc_##entry##_write, \
+	}
+
+static struct proc_dir_entry *oplus_ke_proc_dir;
+
+static ssize_t proc_force_shutdown_read(struct file *file,
+				char __user *buf, size_t size, loff_t *ppos)
+{
+	return 0;
+}
+
+static ssize_t proc_force_shutdown_write(struct file *file,
+			const char __user *buf, size_t size, loff_t *ppos)
+{
+	qpnp_pon_system_pwr_off(PON_POWER_OFF_SHUTDOWN);
+
+	#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+	qcom_scm_deassert_ps_hold();
+	#else
+	if (pm_power_off)
+		pm_power_off();
+	#endif
+
+	return 0;
+}
+
+OPLUS_KE_FILE_OPS(force_shutdown);
 
 const struct dev_pm_ops qpnp_pm_ops;
 struct qpnp_pon *sys_reset_dev;
@@ -386,6 +425,13 @@ void pmicwd_init(struct platform_device *pdev, struct qpnp_pon *pon, bool sys_re
 {
 	u32 pon_rt_sts = 0;
 	int rc;
+
+	oplus_ke_proc_dir = proc_mkdir("oplus_ke", NULL);
+	if (oplus_ke_proc_dir == NULL) {
+		pr_info("oplus_ke proc_mkdir failed\n");
+	}
+
+	OPLUS_KE_PROC_ENTRY(force_shutdown, force_shutdown, 0600);
 
 	if (!pon){
 		return;

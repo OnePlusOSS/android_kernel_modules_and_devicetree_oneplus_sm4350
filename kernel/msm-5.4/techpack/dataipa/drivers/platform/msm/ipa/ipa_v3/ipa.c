@@ -7052,6 +7052,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->manual_fw_load = resource_p->manual_fw_load;
 	ipa3_ctx->max_num_smmu_cb = resource_p->max_num_smmu_cb;
 	ipa3_ctx->hw_type_index = ipa3_get_hw_type_index();
+	ipa3_ctx->fnr_stats_not_supported = resource_p->fnr_stats_not_supported;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -7850,6 +7851,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->ipa_config_is_auto = false;
 	ipa_drv_res->manual_fw_load = false;
 	ipa_drv_res->max_num_smmu_cb = IPA_SMMU_CB_MAX;
+	ipa_drv_res->fnr_stats_not_supported = false;
 
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
@@ -8112,6 +8114,13 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		IPADBG(": gsi wdi db polling = %s\n",
 				ipa_drv_res->gsi_wdi_db_polling
 				? "True" : "False");
+	ipa_drv_res->fnr_stats_not_supported =
+				of_property_read_bool(pdev->dev.of_node,
+				"qcom,fnr-stats-not-supported");
+		IPADBG(": FnR stats not supported = %s\n",
+				ipa_drv_res->fnr_stats_not_supported
+				? "True" : "False");
+
 	result = of_property_read_string(pdev->dev.of_node,
 			"qcom,use-gsi-ipa-fw", &ipa_drv_res->gsi_fw_file_name);
 	if (!result)

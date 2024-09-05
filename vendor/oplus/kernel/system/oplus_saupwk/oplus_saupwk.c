@@ -70,7 +70,7 @@ __setup("saupwk.en=",get_saupwk_enable);
 #endif
 
 static int __init
-oppo_saupwk_during_init(void)
+oplus_saupwk_during_init(void)
 {
     struct proc_dir_entry * pentry;
 #if IS_MODULE(CONFIG_OPLUS_FEATURE_SAUPWK)

@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  oplus Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_display_panel.c
 ** Description : oplus display panel char dev  /dev/oplus_panel
 ** Version : 1.0
+** Date : 2020/06/13
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**  Li.Sheng       2020/06/13        1.0           Build this moudle
 ******************************************************************/
 #include "oplus_display_panel.h"
 
@@ -38,6 +44,7 @@ static const struct panel_ioctl_desc panel_ioctls[] = {
 	PANEL_IOCTL_DEF(PANEL_IOCTL_GET_CLOSEBL_FLAG, oplus_display_panel_get_closebl_flag),
 	PANEL_IOCTL_DEF(PANEL_IOCTL_SET_CABC_STATUS, oplus_display_set_cabc_status),
 	PANEL_IOCTL_DEF(PANEL_IOCTL_GET_CABC_STATUS, oplus_display_get_cabc_status),
+	PANEL_IOCTL_DEF(PANEL_IOCTL_SET_SHUTDOWN_FLAG, oplus_display_set_shutdown_flag),
 };
 
 static int panel_open(struct inode *inode, struct file *filp)

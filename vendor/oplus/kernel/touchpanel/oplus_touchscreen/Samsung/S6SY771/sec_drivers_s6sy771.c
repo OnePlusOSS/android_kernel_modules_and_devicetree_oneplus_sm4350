@@ -450,6 +450,7 @@ static int sec_enter_fw_mode(struct chip_data_s6sy771 *chip_info)
             return -1;
         }
     }
+	sec_wait_for_ready(chip_info, SEC_ACK_BOOT_COMPLETE);
     sec_mdelay(100);
 
     ret = touch_i2c_read_byte(chip_info->client, SEC_READ_BOOT_STATUS);     //after reset, check bootloader again
@@ -560,11 +561,24 @@ static bool sec_limited_flash_page_write(struct chip_data_s6sy771 *chip_info, u3
             ret = touch_i2c_write_block(chip_info->client, tCmd[0], copy_cur, &tCmd[1]);
             if (ret < 0) {
                 TPD_INFO("%s: failed, ret:%d\n", __func__, ret);
-            }
+		/*need soft reset or hard reset*/
+		if (gpio_is_valid(chip_info->hw_res->reset_gpio)) {
+			TPD_INFO("reset by pull down rst pin");
+			gpio_direction_output(chip_info->hw_res->reset_gpio, false);
+			sec_mdelay(10);
+			gpio_direction_output(chip_info->hw_res->reset_gpio, true);
+		} else {
+			touch_i2c_write_block(chip_info->client, SEC_CMD_SOFT_RESET, 0, NULL);
+		}
+			sec_wait_for_ready(chip_info, SEC_ACK_BOOT_COMPLETE);
+			sec_mdelay(50);
+			goto end;
+		}
         }
 
         copy_size += copy_cur;
         copy_left -= copy_cur;
+end:
         kfree(tCmd);
     }
     return ret;
@@ -1100,6 +1114,10 @@ static fw_update_state sec_fw_update(void *chip_data, const struct firmware *fw,
     }
 
     TPD_INFO("%s is called, force update:%d\n", __func__, force);
+
+	if(chip_info->sec_refresh_rate_delay) {
+		sec_reset(chip_info); /*This condition only for reno4pro gaudi model, to fix I2C communication failed issue */
+	}
 
     fd = (u8 *)(fw->data);
     fw_hd = (sec_fw_header *)(fw->data);

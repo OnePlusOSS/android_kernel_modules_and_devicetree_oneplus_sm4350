@@ -50,6 +50,9 @@
     }while(0)
 /******************** End of Log Tag Declear and level define*********************************/
 
+static struct chip_data_s6sy761 *g_chip_info;
+static DEFINE_MUTEX(sec_mtx_lock);
+
 /*************************** start of function delcare****************************************/
 static void sec_mdelay(unsigned int ms);
 static int sec_reset(void *chip_data);
@@ -201,9 +204,39 @@ static int sec_enable_game_mode(struct chip_data_s6sy761 *chip_info, bool enable
 
     buf[3] = enable ? 0x12 : 0x18;  //default value 0x18
     ret = touch_i2c_write_block(chip_info->client, SEC_CMD_SENSETIVE_CTRL, sizeof(buf), buf);
+	ret |= touch_i2c_write_byte(chip_info->client, SEC_CMD_GAME_MODE, enable ? 1 : 0);
     TPD_INFO("%s: state: %d %s!\n", __func__, enable, ret < 0 ? "failed" : "success");
     return ret;
 }
+
+void sec_refresh_switch(int fps)
+{
+	int ret = -1;
+
+	if (!g_chip_info) {
+		return;
+	}
+	if(g_chip_info->sec_refresh_rate_delay) {
+		mutex_lock(&sec_mtx_lock);
+		g_chip_info->display_refresh_rate = fps;
+
+	    if (!g_chip_info->is_power_down) {
+			ret = touch_i2c_write_byte(g_chip_info->client, SEC_CMD_REFRESH_RATE_SWITCH, fps);
+			TPD_INFO("%s: refresh_switch: %d HZ %s! 100ms\n", __func__, fps, ret < 0 ? "failed" : "success");
+			sec_mdelay(100); /* Adding delay when switching 60hz to 90hz and vice versa, to set refresh rate properly in some race condition situations*/
+		}
+		mutex_unlock(&sec_mtx_lock);
+	} else {
+		g_chip_info->display_refresh_rate = fps;
+
+		if (!g_chip_info->is_power_down) {
+			ret = touch_i2c_write_byte(g_chip_info->client, SEC_CMD_REFRESH_RATE_SWITCH, fps);
+			TPD_INFO("%s: refresh_switch: %d HZ %s!\n", __func__, fps, ret < 0 ? "failed" : "success");
+		}
+	}
+	return;
+}
+EXPORT_SYMBOL(sec_refresh_switch);
 
 static void sec_mdelay(unsigned int ms)
 {
@@ -682,7 +715,7 @@ static int sec_reset(void *chip_data)
     TPD_INFO("%s: write sense on %s\n", __func__, (ret < 0) ? "failed" : "success");
 
     enable_irq(chip_info->client->irq);
-
+	sec_refresh_switch(chip_info->display_refresh_rate);
     return 0;
 }
 
@@ -746,7 +779,7 @@ static int sec_power_control(void *chip_data, bool enable)
         ret = touch_i2c_write_block(chip_info->client, SEC_CMD_SENSE_ON, 0, NULL);
         TPD_INFO("%s: write sense on %s\n", __func__, (ret < 0) ? "failed" : "success");
         chip_info->is_power_down = false;
-
+	sec_refresh_switch(chip_info->display_refresh_rate);
         enable_irq(chip_info->client->irq);
     } else {
         disable_irq_nosync(chip_info->client->irq);
@@ -1043,36 +1076,6 @@ static u32 sec_trigger_reason(void *chip_data, int gesture_enable, int is_suspen
     return IRQ_IGNORE;
 }
 
-static bool corner_point_filtered(struct chip_data_s6sy761 *chip_info, uint16_t x, uint16_t y)
-{
-	if (!chip_info->old_firmware_flag_check) {
-		uint16_t vertical_height = 120, hori_width = 100, width = 32, corner_len = 60;
-
-		if (!chip_info->touch_direction && (y > 2340 - vertical_height)) {
-			if ((x < width) && (y > (2340 - vertical_height))) {
-				return true;
-			}
-			if ((y > 2340 - width) && (x  < hori_width)) {
-				return true;
-			}
-			if ((x < corner_len) && (y > 2340 - corner_len)) {
-				return true;
-			}
-
-			if ((x > 1080 - width) && (y > (2340 - vertical_height))) {
-				return true;
-			}
-			if ((y > 2340 - width) && (x  > 1080 - hori_width)) {
-				return true;
-			}
-			if ((x > 1080 - corner_len) && (y > 2340 - corner_len)) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 static int sec_get_touch_points(void *chip_data, struct point_info *points, int max_num)
 {
     int i = 0;
@@ -1098,8 +1101,7 @@ static int sec_get_touch_points(void *chip_data, struct point_info *points, int 
             points[t_id].z = 1;
         }
 
-        if (!corner_point_filtered(chip_info, points[t_id].x, points[t_id].y))
-            obj_attention = obj_attention | (1 << t_id);    //set touch bit
+	obj_attention = obj_attention | (1 << t_id);    /*set touch bit*/
     }
 
     left_event = chip_info->first_event[7] & 0x3F;
@@ -1129,8 +1131,7 @@ static int sec_get_touch_points(void *chip_data, struct point_info *points, int 
             if (points[t_id].z <= 0) {
                 points[t_id].z = 1;
             }
-            if (!corner_point_filtered(chip_info, points[t_id].x, points[t_id].y))
-                obj_attention = obj_attention | (1 << t_id);    //set touch bit
+		obj_attention = obj_attention | (1 << t_id);    /*set touch bit*/
         }
     }
 
@@ -3198,7 +3199,7 @@ static int sec_tp_probe(struct i2c_client *client, const struct i2c_device_id *i
     chip_info->grip_area.ver_edgescreen_y2 = 0x0384;
     chip_info->grip_area.edgescreen_switch = 0x00;
 	chip_info->in_suspend = &ts->is_suspended;
-
+	chip_info->display_refresh_rate = 90;
 	chip_info->old_firmware_flag_check = of_property_read_bool(ts->dev->of_node, "old_firmware_flag_check");
 
     /* 4. file_operations callbacks binding */
@@ -3222,6 +3223,7 @@ static int sec_tp_probe(struct i2c_client *client, const struct i2c_device_id *i
         sec_init_kernel_grip_proc(ts->prEntry_tp, ts);
 
     }
+	g_chip_info = chip_info;
     TPD_INFO("%s, probe normal end\n", __func__);
     return 0;
 

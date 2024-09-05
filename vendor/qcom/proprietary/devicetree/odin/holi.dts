@@ -8,5 +8,5 @@
 	model = "Qualcomm Technologies, Inc. Holi SoC";
 	compatible = "qcom,holi";
 	qcom,board-id = <0 0>;
-	oplus,dtsi_no = <20121 20281 20283>;
+	oplus,dtsi_no = <20121 20281 20283 21227>;
 };

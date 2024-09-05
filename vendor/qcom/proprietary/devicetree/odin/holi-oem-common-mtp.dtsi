@@ -31,6 +31,7 @@
 		io-channel-names= "vph_pwr_voltage_sub";
 
 		main-sub {
+			devinfo-match-ignore-list = <21227>; /*to jump over match*/
 			compatible = "hw-match, main-sub";
 			use_pmic_adc;
 			adc_ranges = <0 80

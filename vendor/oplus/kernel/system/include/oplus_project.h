@@ -45,6 +45,7 @@ void get_serialID(char *serialno);
 
 //cdt interface for Q or R
 unsigned int get_project(void);
+unsigned int get_prj(void);
 unsigned int is_project(int project);
 unsigned int get_Oplus_Boot_Mode(void);
 unsigned int get_PCB_Version(void);

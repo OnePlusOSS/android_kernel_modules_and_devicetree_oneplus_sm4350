@@ -17,8 +17,10 @@
 #include <soc/oplus/device_info.h>
 
 #include "touchpanel_common.h"
+#include "touchpanel_prevention/touchpanel_prevention.h"
 #include "touchpanel_autotest/touchpanel_autotest.h"
 #include "touch_comon_api/touch_comon_api.h"
+#include "touchpanel_algorithm/touchpanel_algorithm.h"
 
 
 #ifndef CONFIG_REMOVE_OPLUS_FUNCTION
@@ -540,6 +542,9 @@ static ssize_t proc_game_switch_write(struct file *file,
 	if (!ts->is_suspended) {
 		mutex_lock(&ts->mutex);
 		ts->ts_ops->mode_switch(ts->chip_data, MODE_GAME, value > 0);
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+		switch_kalman_fun(ts, value > 0);
+#endif
 		mutex_unlock(&ts->mutex);
 
 	} else {
@@ -1278,6 +1283,10 @@ static ssize_t proc_dir_control_write(struct file *file,
 		}
 	}
 
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+	set_algorithm_direction(ts, temp);
+#endif
+
 	mutex_unlock(&ts->mutex);
 
 	return count;
@@ -1706,6 +1715,9 @@ static ssize_t proc_smooth_level_write(struct file *file, const char __user *buf
     } else {
         TPD_INFO("%s: TP is_suspended.\n", __func__);
     }
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+        switch_kalman_fun(ts, 0);
+#endif
     mutex_unlock(&ts->mutex);
 
     return count;
@@ -2675,6 +2687,11 @@ static int tp_main_register_read_func(struct seq_file *s, void *v)
 	seq_printf(s, "touch_count:%d\n", ts->touch_count);
 	debug_info_ops->main_register_read(s, ts->chip_data);
 
+	if (ts->kernel_grip_support) {
+		seq_printf(s, "kernel_grip_info:\n");
+		kernel_grip_print_func(s, ts->grip_info);
+	}
+
 	if (ts->health_monitor_support && tp_debug == 2) {
 		if (monitor_data->fw_version) {
 			memset(monitor_data->fw_version, 0, MAX_DEVICE_VERSION_LENGTH);
@@ -3060,6 +3077,7 @@ int init_touchpanel_proc(struct touchpanel_data *ts)
 	int ret = 0;
 	int i = 0;
 	struct proc_dir_entry *prEntry_tp = NULL;
+	struct proc_dir_entry *prEntry_tmp = NULL;
 	char name[TP_NAME_SIZE_MAX];
 
 	tp_proc_node tp_proc_node[] = {
@@ -3224,7 +3242,22 @@ int init_touchpanel_proc(struct touchpanel_data *ts)
 
 	/*create debug_info node*/
 	init_debug_info_proc(ts);
-	init_debug_info_proc(ts);
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+	oplus_touch_algorithm_init(ts);
+#endif
+
+	/*create kernel grip proc file*/
+	if (ts->kernel_grip_support) {
+		init_kernel_grip_proc(ts->prEntry_tp, ts->grip_info);
+		prEntry_tmp = proc_create_data("kernel_grip_default_para",
+					       0664,
+					       prEntry_tp,
+					       &tp_grip_default_para_fops,
+					       ts);
+		if (prEntry_tmp == NULL) {
+			TPD_INFO("%s: Couldn't create proc entry, %d\n", __func__, __LINE__);
+		}
+	}
 
 	return ret;
 }

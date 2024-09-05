@@ -213,7 +213,11 @@ static int find_event_id(int16_t event_id)
 
 static struct timespec oplus_current_kernel_time(void) {
 	struct timespec64 ts64;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0))
+        ts64 = current_kernel_time64();
+#else
 	ktime_get_coarse_real_ts64(&ts64);
+#endif
 	return timespec64_to_timespec(ts64);
 }
 

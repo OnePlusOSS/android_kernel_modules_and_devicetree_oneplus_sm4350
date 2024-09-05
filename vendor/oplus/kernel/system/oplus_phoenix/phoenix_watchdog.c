@@ -13,7 +13,7 @@
 ##
 ## Version:  1.0
 ## Date:  2018/12/24
-## Author:  bright.zhang@oplus.com
+## Author:  bright.zhang
 ## ----------------- Revision History: ----------------------
 ## <author>       <data>           <desc>
 ## Bright Zhang   2018/12/24       create this file

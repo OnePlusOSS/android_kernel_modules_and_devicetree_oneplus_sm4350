@@ -6,7 +6,6 @@
  *             kernelFwUpdate
  * Version:1.0:
  * Date created:2020/07/20
- * Author: Qicai.gu@Bsp.Driver
  * TAG: BSP.TP.Init
 */
 #include <linux/kernel.h>

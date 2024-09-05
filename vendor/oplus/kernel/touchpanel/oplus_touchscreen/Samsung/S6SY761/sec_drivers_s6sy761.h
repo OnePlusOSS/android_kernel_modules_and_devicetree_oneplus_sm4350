@@ -133,13 +133,15 @@
 #define SEC_CMD_GRIP_PZONE                      0xAA
 #define SEC_CMD_GRIP_PCORNER                    0xAB
 #define SEC_CMD_GRIP_LCORNER                    0xAC
-#define SEC_CMD_GRIP_DIRECTION                  0xAD
+#define SEC_CMD_GRIP_DIRECTION                  0xAD	/* 0 is portrait,1 is landscape */
 #define SEC_CMD_ELI_LCORNER                     0xBF
 #define SEC_CMD_EDGE_SCREEN                     0xBE
 #define SEC_CMD_SENSETIVE_CTRL                  0x3F
 #define SEC_CMD_NOISE_CTRL                      0x33
 #define SEC_CMD_WET_SWITCH                      0x4B
 #define SEC_CMD_TOUCHHOLD_SWITCH                0x43
+#define SEC_CMD_GAME_MODE                       0x45
+#define SEC_CMD_REFRESH_RATE_SWITCH             0x40
 
 #define SEC_CMD_RTDP_ERASE                      0xC9    //Erase RTDP Memory
 #define SEC_CMD_RTDP_START                      0xC0    //Start RTDP
@@ -289,5 +291,7 @@ struct chip_data_s6sy761 {
     u8                              first_event[SEC_EVENT_BUFF_SIZE];
     struct grip_rejction            grip_area;
 	bool				old_firmware_flag_check; /* Flag to check old Samsung firmware */
+	int					display_refresh_rate;
+	bool				sec_refresh_rate_delay;
 };
 #endif

@@ -92,8 +92,27 @@ config TOUCHPANEL_ILITEK
     say Y to enable driver for Touchpanel using ilitek IC
     Say M to enable driver for Touchpanel using ilitek IC as module.
 
+if TOUCHPANEL_SYNAPTICS
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Synaptics/Kconfig"
+endif
+
+if TOUCHPANEL_GOODIX
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Goodix/Kconfig"
+endif
+
+if TOUCHPANEL_FOCAL
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Focal/Kconfig"
+endif
+
 if TOUCHPANEL_NOVA
 source "drivers/input/touchscreen/oplus_touchscreen_v2/Novatek/Kconfig"
+endif
+
+if TOUCHPANEL_HIMAX
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Himax/Kconfig"
+endif
+if TOUCHPANEL_SAMSUNG
+source "drivers/input/touchscreen/oplus_touchscreen_v2/Samsung/Kconfig"
 endif
 
 if TOUCHPANEL_ILITEK

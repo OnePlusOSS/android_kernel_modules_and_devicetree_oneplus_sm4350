@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_display_panel_cabc.h
 ** Description : oplus display panel cabc feature
 ** Version : 1.0
+** Date : 2020/06/13
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**  Li.Sheng       2020/06/13        1.0           Build this moudle
 ******************************************************************/
 #ifndef _OPLUS_DISPLAY_PANEL_CABC_H_
 #define _OPLUS_DISPLAY_PANEL_CABC_H_

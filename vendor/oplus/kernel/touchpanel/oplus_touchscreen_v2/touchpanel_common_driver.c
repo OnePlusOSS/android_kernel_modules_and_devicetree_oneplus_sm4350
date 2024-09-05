@@ -24,12 +24,16 @@
 #include <linux/version.h>
 #include <linux/iio/consumer.h>
 #include <linux/alarmtimer.h>
+#include <linux/pm_wakeup.h>
 
 #include "touchpanel_common.h"
 #include "touchpanel_proc.h"
 #include "touch_comon_api/touch_comon_api.h"
+#include "touchpanel_prevention/touchpanel_prevention.h"
 #include "touchpanel_healthinfo/touchpanel_healthinfo.h"
-
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+#include "touchpanel_algorithm/touchpanel_algorithm.h"
+#endif
 #ifndef CONFIG_REMOVE_OPLUS_FUNCTION
 #ifdef CONFIG_TOUCHPANEL_MTK_PLATFORM
 #include<mt-plat/mtk_boot_common.h>
@@ -199,6 +203,10 @@ void operate_mode_switch(struct touchpanel_data *ts)
 
 		if (ts->headset_pump_support) {
 			ts->ts_ops->mode_switch(ts->chip_data, MODE_HEADSET, ts->is_headset_checked);
+		}
+
+		if (ts->kernel_grip_support && ts->ts_ops->enable_kernel_grip) {
+			ts->ts_ops->enable_kernel_grip(ts->chip_data, ts->grip_info);
 		}
 
 		if (ts->smooth_level_array_support && ts->ts_ops->smooth_lv_set) {
@@ -648,6 +656,18 @@ static inline void tp_touch_handle(struct touchpanel_data *ts)
 	}
 
 	mutex_lock(&ts->report_mutex);
+	if (ts->kernel_grip_support && (!ts->grip_no_driver_support)) {
+		obj_attention = notify_prevention_handle(ts->grip_info, obj_attention, points);
+		if (ts->health_monitor_support) {
+			tp_healthinfo_report(&ts->monitor_data, HEALTH_GRIP, ts->grip_info);
+		}
+	}
+
+#ifdef CONFIG_TOUCHPANEL_ALGORITHM
+	obj_attention = touch_algorithm_handle(ts, obj_attention, points);
+	special_touch_handle(ts);
+
+#endif
 
 	if ((obj_attention & TOUCH_BIT_CHECK) != 0) {
 		ts->up_status = false;
@@ -693,6 +713,13 @@ static inline void tp_touch_handle(struct touchpanel_data *ts)
 
 			else {
 				input_mt_slot(ts->input_dev, i);
+
+				if (ts->kernel_grip_support && ts->grip_info
+				    && ts->grip_info->eli_reject_status[i]
+				    && !(ts->grip_info->grip_disable_level & (1 << GRIP_DISABLE_UP2CANCEL))) {
+					input_report_abs(ts->input_dev, ABS_MT_PRESSURE, UP2CANCEL_PRESSURE_VALUE);
+				}
+
 				input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, 0);
 			}
 
@@ -740,6 +767,8 @@ static inline void tp_touch_handle(struct touchpanel_data *ts)
 	if (ts->health_monitor_support) {
 		ts->monitor_data.touch_points = points;
 		ts->monitor_data.touch_num = finger_num;
+		ts->monitor_data.direction = ts->grip_info ? ts->grip_info->touch_dir :
+					     ts->limit_enable;
 		tp_healthinfo_report(&ts->monitor_data, HEALTH_TOUCH, &obj_attention);
 	}
 }
@@ -1135,6 +1164,10 @@ static irqreturn_t tp_irq_thread_fn(int irq, void *dev_id)
 {
 	struct touchpanel_data *ts = (struct touchpanel_data *)dev_id;
 
+	if (ts->ws) {
+		__pm_stay_awake(ts->ws);
+	}
+
 	/*for qaulcomn to stop cpu go to C4 idle state*/
 #ifdef CONFIG_TOUCHIRQ_UPDATE_QOS
 
@@ -1157,12 +1190,12 @@ static irqreturn_t tp_irq_thread_fn(int irq, void *dev_id)
 	/*for check bus i2c/spi is ready or not*/
 	if (ts->bus_ready == false) {
 		/*TP_INFO(ts->tp_index, "Wait device resume!");*/
-		wait_event_interruptible_timeout(ts->wait, ts->bus_ready, msecs_to_jiffies(50));
+		wait_event_interruptible_timeout(ts->wait, ts->bus_ready, msecs_to_jiffies(ts->irq_need_dev_resume_time));
 		/*TP_INFO(ts->tp_index, "Device maybe resume!");*/
 	}
 
 	if (ts->bus_ready == false) {
-		TP_INFO(ts->tp_index, "The device not resume 50ms!");
+		TP_INFO(ts->tp_index, "The device not resume %dms!",ts->irq_need_dev_resume_time);
 		goto exit;
 	}
 
@@ -1174,7 +1207,14 @@ static irqreturn_t tp_irq_thread_fn(int irq, void *dev_id)
 	/*for normal ic*/
 	if (ts->int_mode == BANNABLE) {
 		mutex_lock(&ts->mutex);
-		tp_work_func(ts);
+	/*Only if the following four conditions are met at the same time:
+  		 tp is suspend && gesture is disable && irq flag is edge-triggered && disable_suspend_irq_handler is set to 1,
+  		tp_work_func(ts)  will be ignored */
+  		if (!ts->is_suspended || (TP_ALL_GESTURE_SUPPORT && TP_ALL_GESTURE_ENABLE) ||
+  				!(ts->irq_flags & (IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING)) ||
+  				!(ts->disable_suspend_irq_handler)) {
+  			tp_work_func(ts);
+  		}
 		mutex_unlock(&ts->mutex);
 
 	} else { /*for some ic such as synaptic tcm need get data by interrupt*/
@@ -1195,6 +1235,9 @@ exit:
 	}
 
 #endif
+        if (ts->ws) {
+                __pm_relax(ts->ws);
+        }
 
 	return IRQ_HANDLED;
 }
@@ -1472,6 +1515,7 @@ static int init_parse_dts(struct device *dev, struct touchpanel_data *ts)
 				     "noise_modetest_support");
 	ts->fw_update_in_probe_with_headfile = of_property_read_bool(np,
 					       "fw_update_in_probe_with_headfile");
+	ts->kernel_grip_support     = of_property_read_bool(np, "kernel_grip_support");
 	ts->grip_no_driver_support = of_property_read_bool(np, "grip_no_driver_support");
 	ts->report_rate_white_list_support = of_property_read_bool(np,
 					     "report_rate_white_list_support");
@@ -1761,6 +1805,13 @@ static int init_parse_dts(struct device *dev, struct touchpanel_data *ts)
 		}
 	}
 
+	rc = of_property_read_u32(np, "touchpanel,irq_need_dev_resume_time", &ts->irq_need_dev_resume_time);
+  	if (rc) {
+		TPD_INFO("ts->irq_need_dev_resume_time not specified\n");
+  		ts->irq_need_dev_resume_time = 50;
+  	}
+  	TPD_INFO("ts->irq_need_dev_resume_time = %d ms\n", ts->irq_need_dev_resume_time);
+
 	/* resolution info*/
 	rc = of_property_read_u32(np, "touchpanel,max-num-support", &ts->max_num);
 
@@ -1916,6 +1967,9 @@ static int init_parse_dts(struct device *dev, struct touchpanel_data *ts)
 		}
 		ts->sensitive_level_used_array = (u32 *)&(ts->sensitive_level_array);
 	}
+
+	/*set disable suspend irq handler parameter, for of_property_read_bool return 1 when success and return 0 when item is not exist*/
+  	ts->disable_suspend_irq_handler = of_property_read_bool(np, "disable_suspend_irq_handler_support");
 
 	/*set incell panel parameter, for of_property_read_bool return 1 when success and return 0 when item is not exist*/
 	rc = ts->is_incell_panel = of_property_read_bool(np, "incell_screen");
@@ -2706,6 +2760,15 @@ int register_common_touch_device(struct touchpanel_data *pdata)
 		ts->freq_hop_info.freq_hop_freq = 0;
 	}
 
+	/*initial kernel grip parameter*/
+	if (ts->kernel_grip_support) {
+		ts->grip_info = kernel_grip_init(ts->dev);
+
+		if (!ts->grip_info) {
+			TP_INFO(ts->tp_index, "kernel grip init failed.\n");
+		}
+	}
+
 	// lcd_tp_refresh_support support
 	if (ts->lcd_tp_refresh_support) {
 		ts->tp_refresh_wq = create_singlethread_workqueue("tp_refresh_wq");
@@ -2733,6 +2796,11 @@ int register_common_touch_device(struct touchpanel_data *pdata)
 	}
 
 	/*step 23 : Other*****/
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
+	ts->ws = wakeup_source_register(dev_name(ts->dev));
+#else
+        ts->ws = wakeup_source_register(ts->dev, dev_name(ts->dev));
+#endif
 	if (ts->fw_edge_limit_support) {
 		ts->limit_enable = 1;
 	}
@@ -2921,6 +2989,10 @@ void unregister_common_touch_device(struct touchpanel_data *pdata)
 		regulator_put(ts->hw_res.vddi);
 		ts->hw_res.vddi = NULL;
 	}
+	/*free wakeup source*/
+	if (ts->ws) {
+		wakeup_source_unregister(ts->ws);
+	}
 
 	/*wake_lock_destroy(&ts->wakelock);*/
 	/*step8 : mutex init*/
@@ -3106,6 +3178,16 @@ static void tp_resume(struct device *dev)
 	if (ts->tp_ic_type == TYPE_TDDI_TCM) {
 		if (ts->ts_ops->reinit_device) {
 			ts->ts_ops->reinit_device(ts->chip_data);
+		}
+	}
+
+	if (ts->kernel_grip_support) {
+		if (ts->grip_info) {
+			kernel_grip_reset(ts->grip_info);
+
+		} else {
+			ts->grip_info = kernel_grip_init(ts->dev);
+			init_kernel_grip_proc(ts->prEntry_tp, ts->grip_info);
 		}
 	}
 

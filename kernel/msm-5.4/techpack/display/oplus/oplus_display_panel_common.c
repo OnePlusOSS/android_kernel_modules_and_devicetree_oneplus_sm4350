@@ -1,14 +1,21 @@
 /***************************************************************
 ** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_display_panel_common.c
 ** Description : oplus display panel common feature
 ** Version : 1.0
+** Date : 2020/06/13
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**  Li.Sheng       2020/06/13        1.0           Build this moudle
 ******************************************************************/
 #include "oplus_display_panel_common.h"
 
 int oplus_debug_max_brightness = 0;
 int oplus_cabc_status = OPLUS_DISPLAY_CABC_UI;
 extern int lcd_closebl_flag;
+extern int shutdown_flag;
 EXPORT_SYMBOL(oplus_debug_max_brightness);
 
 extern int dsi_display_read_panel_reg(struct dsi_display *display, u8 cmd,
@@ -508,6 +515,16 @@ int oplus_display_panel_set_closebl_flag(void *data)
 	if (1 != (*closebl))
 		lcd_closebl_flag = 0;
 	pr_err("oplus_display_set_closebl_flag = %d\n", lcd_closebl_flag);
+
+	return 0;
+}
+
+
+int oplus_display_set_shutdown_flag(void *buf)
+{
+	shutdown_flag = 1;
+	pr_err("debug for %s, buf = [%s], shutdown_flag = %d\n",
+			__func__, buf, shutdown_flag);
 
 	return 0;
 }

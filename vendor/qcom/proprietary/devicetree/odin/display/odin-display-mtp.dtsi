@@ -3,6 +3,8 @@
 #include "dsi-panel-oplus-nt36672c-dsjm-fhd-plus-90fps-video.dtsi"
 #include "dsi-panel-oplus-nt36672c-tm-fhd-plus-90fps-video.dtsi"
 #include "dsi-panel-oplus-ili7807s-tm-fhd-plus-90fps-video.dtsi"
+/* add for 21227 LCM */
+#include "dsi-panel-oplus-nt36672c-goku-a-dsjm-fhd-plus-90fps-video.dtsi"
 
 &soc {
 	dsi_panel_pwr_supply_labibb {
@@ -16,6 +18,7 @@
 			qcom,supply-max-voltage = <1800000>;
 			qcom,supply-enable-load = <62000>;
 			qcom,supply-disable-load = <80>;
+			qcom,supply-pre-on-sleep = <30>;
 			qcom,supply-post-on-sleep = <20>;
 		};
 

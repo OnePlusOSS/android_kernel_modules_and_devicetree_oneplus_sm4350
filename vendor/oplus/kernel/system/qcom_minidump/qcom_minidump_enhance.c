@@ -29,7 +29,7 @@
 #include <linux/percpu.h>
 #include <soc/qcom/memory_dump.h>
 #include <linux/sched/debug.h>
-#include <soc/oplus/oppo_project.h>
+#include <soc/oplus/oplus_project.h>
 #include <soc/oplus/system/qcom_minidump_enhance.h>
 
 #define CPUCTX_VERSION 		1

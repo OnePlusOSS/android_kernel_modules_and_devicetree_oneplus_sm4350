@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_display_panel_hbm.h
 ** Description : oplus display panel hbm feature
 ** Version : 1.0
+** Date : 2020/07/06
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**  Li.Sheng       2020/07/06        1.0           Build this feature
 ******************************************************************/
 #ifndef _OPLUS_DISPLAY_PANEL_HBM_H_
 #define _OPLUS_DISPLAY_PANEL_HBM_H_

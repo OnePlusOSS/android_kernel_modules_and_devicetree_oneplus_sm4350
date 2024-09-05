@@ -104,7 +104,7 @@ struct wakeup_count_desc_t {
 	struct ws_desc_t ws_desc[4]; /*shouldn't less than 4*/
 };
 
-#if defined(CONFIG_OPPO_WAKELOCK_PROFILER) || defined(CONFIG_OPLUS_WAKELOCK_PROFILER)
+#if defined(CONFIG_OPLUS_WAKELOCK_PROFILER) || defined(CONFIG_OPLUS_WAKELOCK_PROFILER)
 
 int wakeup_reasons_statics(const char *irq_name, int choose_flag);
 void wakeup_reasons_clear(int choose_flag);

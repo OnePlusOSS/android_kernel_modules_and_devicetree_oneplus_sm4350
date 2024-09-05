@@ -5847,7 +5847,7 @@ static int dsi_display_bind(struct device *dev,
 #ifndef OPLUS_BUG_STABILITY
 error_host_deinit:
 	(void)dsi_display_mipi_host_deinit(display);
-#endif /* OPLUS_BUG_STABILITY */
+#endif /* OPLUS_BUG_STABILITY */	
 error_clk_client_deinit:
 	(void)dsi_deregister_clk_handle(display->dsi_clk_handle);
 error_clk_deinit:

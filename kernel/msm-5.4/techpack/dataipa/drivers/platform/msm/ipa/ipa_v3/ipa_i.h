@@ -2146,6 +2146,7 @@ struct ipa3_context {
 	bool manual_fw_load;
 	u32 num_smmu_cb_probed;
 	u32 max_num_smmu_cb;
+	bool fnr_stats_not_supported;
 };
 
 struct ipa3_plat_drv_res {
@@ -2214,6 +2215,7 @@ struct ipa3_plat_drv_res {
 	bool manual_fw_load;
 	bool ipa_config_is_auto;
 	u32 max_num_smmu_cb;
+	bool fnr_stats_not_supported;
 };
 
 /**

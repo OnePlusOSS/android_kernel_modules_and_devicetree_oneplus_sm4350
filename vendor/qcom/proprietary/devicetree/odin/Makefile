@@ -3,10 +3,12 @@ dtbo-$(CONFIG_ARCH_HOLI) += \
 	odin-20121-mtp-overlay.dtbo \
 	odin-20281-mtp-overlay.dtbo \
 	odin-20283-mtp-overlay.dtbo \
+	odin-21227-mtp-overlay.dtbo \
 
 odin-20121-mtp-overlay.dtbo-base := holi.dtb
 odin-20281-mtp-overlay.dtbo-base := holi.dtb
 odin-20283-mtp-overlay.dtbo-base := holi.dtb
+odin-21227-mtp-overlay.dtbo-base := holi.dtb
 
 else
 dtb-$(CONFIG_ARCH_HOLI) += holi-rumi.dtb \

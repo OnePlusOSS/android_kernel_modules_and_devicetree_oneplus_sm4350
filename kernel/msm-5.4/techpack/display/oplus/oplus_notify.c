@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  oplus Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_aod.c
 ** Description : oplus aod feature
 ** Version : 1.0
+** Date : 2020/09/24
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**  liping-m         2020/09/24        1.0           Build this moudle
 ******************************************************************/
 #include <linux/msm_drm_notify.h>
 #include <linux/module.h>

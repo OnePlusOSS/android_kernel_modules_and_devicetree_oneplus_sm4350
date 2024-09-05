@@ -1,8 +1,14 @@
 /***************************************************************
 ** Copyright (C),  2020,  OPLUS Mobile Comm Corp.,  Ltd
+** VENDOR_EDIT
 ** File : oplus_ffl.c
 ** Description : oplus ffl feature
 ** Version : 1.0
+** Date : 2020/04/23
+**
+** ------------------------------- Revision History: -----------
+**  <author>        <data>        <version >        <desc>
+**   Qianxu         2020/04/23        1.0           Build this moudle
 ******************************************************************/
 
 #include <linux/mutex.h>

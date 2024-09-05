@@ -28,19 +28,11 @@
 #define DEFAULT_CHILD_STR_LEN       8
 #define DEFAULT_REPORT_STR_LEN      100
 #define DEFAULT_BUF_MATRIX_LINEBREAK    8
-/*
+
 #define CLICK_COUNT_ARRAY_WIDTH     4
 #define CLICK_COUNT_ARRAY_HEIGHT    5
-*/
-#define MS_PER_SECOND               1000
 
-#define VOLTAGE_STATE_DEFAULT       -99
-#define VOLTAGE_STATE_REGULATOR_DISABLED    -1
-#define VOLTAGE_STATE_ENABLE_GPIO_LOW   -2
-#define AVDD_VOLTAGE_LIMIT_MIN      2700000
-#define AVDD_VOLTAGE_LIMIT_MAX      3600000
-#define VDDI_VOLTAGE_LIMIT_MIN      1620000
-#define VDDI_VOLTAGE_LIMIT_MAX      1980000
+#define MS_PER_SECOND               1000
 
 #define KEVENT_LOG_TAG              "psw_bsp_tp"
 #define KEVENT_EVENT_ID             "tp_fatal_report"
@@ -67,7 +59,6 @@
 typedef enum {
 	HEALTH_TOUCH = 0,
 	HEALTH_GESTURE,
-	HEALTH_GESTURE_READ,
 	HEALTH_FINGERPRINT,
 	HEALTH_FACE_DETECT,
 	HEALTH_REPORT,
@@ -83,9 +74,6 @@ typedef enum {
 	HEALTH_FW_UPDATE_COST,
 	HEALTH_GRIP,
 	HEALTH_GRIP_UP,
-	HEALTH_BELOW_RATE,
-	HEALTH_AVDD,
-	HEALTH_VDDI,
 } healthinfo_type;
 
 void reset_healthinfo_time_counter(u64 *time_counter);
@@ -97,8 +85,6 @@ int tp_healthinfo_report(void *tp_monitor_data, healthinfo_type type,
 			void *value);
 
 int tp_healthinfo_read(struct seq_file *s, void *tp_monitor_data);
-
-int tp_healthinfo_clear(void *tp_monitor_data);
 
 int tp_healthinfo_init(struct device *dev, void *tp_monitor_data);
 
